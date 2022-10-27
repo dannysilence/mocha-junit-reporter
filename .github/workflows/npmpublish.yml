@@ -42,7 +42,7 @@ jobs:
       - name: Build package
         run: |
           npm ci
-          npm test
+          npm run test:none
       - name: Patch package version
         if: github.ref == 'refs/heads/main'
         run:
@@ -71,7 +71,7 @@ jobs:
       - name: Build package
         run: |
           npm ci
-          npm test
+          npm run test:none
       - name: Patch package version
         if: github.ref == 'refs/heads/main'
         run:

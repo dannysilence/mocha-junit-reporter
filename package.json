@@ -7,6 +7,7 @@
     "ci": "npm run lint && npm run test",
     "lint": "./node_modules/.bin/eslint '*.js' 'test/**/*.js'",
     "test": "MOCHA_FILE=test/mocha.xml node_modules/.bin/mocha test --reporter=spec",
+    "test:none": "echo okay",
     "tdd": "MOCHA_FILE=test/mocha.xml node_modules/.bin/mocha test --reporter=min --watch"
   },
   "repository": {
