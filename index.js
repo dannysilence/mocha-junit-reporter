@@ -194,6 +194,35 @@ function getJenkinsClassname (test, options) {
   return titles.join(options.suiteTitleSeparatedBy);
 }
 
+function warn(x) {
+  if(debugO === true) {
+    if(x.type==='test') {
+      let y = {
+        name: x.title,
+        state: x.state
+      }
+      console.warn(cleanCycles(y)); 
+    }
+  }
+}
+
+
+function info(x) {
+  if(debugO === true) {
+    if(x.type==='test') {
+      let y = {
+        name: x.title,
+        state: x.state
+      }
+      console.info(cleanCycles(y)); 
+    }
+  }
+}
+
+
+
+let debugO = false, minimal = false, x = {};
+
 /**
  * JUnit reporter for mocha.js.
  * @module mocha-junit-reporter
@@ -201,6 +230,8 @@ function getJenkinsClassname (test, options) {
  * @param {Object} options - mocha options
  */
 function MochaJUnitReporter(runner, options) {
+  info(options);
+  if(options.reporterOptions.enabled === false) return;
   if (mocha6plus) {
     createStatsCollector(runner);
   }
