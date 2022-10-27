@@ -63,7 +63,7 @@ function findReporterOptions(options) {
 function configureDefaults(options) {
   var config = findReporterOptions(options);
   debug('options', config);
-  config.mochaFile = getSetting(config.mochaFile, 'MOCHA_FILE', 'test-results.xml');
+  config.mochaFile = getSetting(config.mochaFile, 'MOCHA_FILE', '[spec].xml');
   config.attachments = getSetting(config.attachments, 'ATTACHMENTS', false);
   config.antMode = getSetting(config.antMode, 'ANT_MODE', false);
   config.jenkinsMode = getSetting(config.jenkinsMode, 'JENKINS_MODE', false);
@@ -294,6 +294,11 @@ MochaJUnitReporter.prototype.getTestsuiteData = function(suite) {
 
   if(suite.file) {
     testSuite.testsuite[0]._attr.file =  suite.file;
+
+    if(this._options.mochaFile.includes('[spec')) {
+      let f = this._options.mochaFile.replace('[spec]', suite.file+'.xml');
+      this._options.mochaFile = v;
+    }
   }
 
   var properties = generateProperties(this._options);
