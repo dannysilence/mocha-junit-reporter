@@ -566,6 +566,6 @@ MochaJUnitReporter.prototype.writeXmlToDisk = function (xml, filePath) {
     } catch (exc) {
       console.info('problem writing results: ' + exc);
     }
-    console.info('results written successfully');
+    //console.info('results written successfully');
   }
 };
