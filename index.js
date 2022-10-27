@@ -543,9 +543,7 @@ MochaJUnitReporter.prototype.writeXmlToDisk = function (xml, filePath) {
 
       if (s4.startsWith(s2)) { s4 = s4.replace(s2, ''); }
       if (s4.includes(`\\`)) { s4 = s4.replace(`\\`, '/'); }
-
-      console.info('xml file name: ' + s4);
-
+      
       return s4;
     }
 
@@ -560,7 +558,7 @@ MochaJUnitReporter.prototype.writeXmlToDisk = function (xml, filePath) {
       filePath = filePath.replace('[spec]', fn2X(xml));
     }
 
-    console.info('writing file to', filePath);
+    console.info('writing xml file to', filePath);
     mkdirp.sync(path.dirname(filePath));
 
     try {
