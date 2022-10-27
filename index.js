@@ -53,8 +53,8 @@ function findReporterOptions(options) {
   }
   // this is require to handle .mocharc.js files
   debug('Looking for .mocharc.js options');
-  return Object.keys(options).filter(function(key) { return key.indexOf('reporterOptions.') === 0; })
-    .reduce(function(reporterOptions, key) {
+  return Object.keys(options).filter(function (key) { return key.indexOf('reporterOptions.') === 0; })
+    .reduce(function (reporterOptions, key) {
       reporterOptions[key.substring('reporterOptions.'.length)] = options[key];
       return reporterOptions;
     }, {});
@@ -130,14 +130,14 @@ function getSetting(value, key, defaultVal, transform) {
 
 function defaultSuiteTitle(suite) {
   if (suite.root && suite.title === '') {
-      return stripAnsi(this._options.rootSuiteTitle);
+    return stripAnsi(this._options.rootSuiteTitle);
   }
   return stripAnsi(suite.title);
 }
 
 function fullSuiteTitle(suite) {
   var parent = suite.parent;
-  var title = [ suite.title ];
+  var title = [suite.title];
 
   while (parent) {
     if (parent.root && parent.title === '') {
@@ -158,7 +158,7 @@ function isInvalidSuite(suite) {
 function parsePropertiesFromEnv(envValue) {
   if (envValue) {
     debug('Parsing from env', envValue);
-    return envValue.split(',').reduce(function(properties, prop) {
+    return envValue.split(',').reduce(function (properties, prop) {
       var property = prop.split(':');
       properties[property[0]] = property[1];
       return properties;
@@ -173,14 +173,14 @@ function generateProperties(options) {
   if (!props) {
     return [];
   }
-  return Object.keys(props).reduce(function(properties, name) {
+  return Object.keys(props).reduce(function (properties, name) {
     var value = props[name];
     properties.push({ property: { _attr: { name: name, value: value } } });
     return properties;
   }, []);
 }
 
-function getJenkinsClassname (test, options) {
+function getJenkinsClassname(test, options) {
   debug('Building jenkins classname for', test);
   var parent = test.parent;
   var titles = [];
@@ -195,26 +195,26 @@ function getJenkinsClassname (test, options) {
 }
 
 function warn(x) {
-  if(debugO === true) {
-    if(x.type==='test') {
+  if (debugO === true) {
+    if (x.type === 'test') {
       let y = {
         name: x.title,
         state: x.state
       }
-      console.warn(cleanCycles(y)); 
+      console.warn(cleanCycles(y));
     }
   }
 }
 
 
 function info(x) {
-  if(debugO === true) {
-    if(x.type==='test') {
+  if (debugO === true) {
+    if (x.type === 'test') {
       let y = {
         name: x.title,
         state: x.state
       }
-      console.info(cleanCycles(y)); 
+      console.info(cleanCycles(y));
     }
   }
 }
@@ -230,8 +230,8 @@ let debugO = false, minimal = false, x = {};
  * @param {Object} options - mocha options
  */
 function MochaJUnitReporter(runner, options) {
-  info(options);
-  if(options.reporterOptions.enabled === false) return;
+  console.info(JSON.stringify(options));
+  if (options.reporterOptions.enabled === false) return;
   if (mocha6plus) {
     createStatsCollector(runner);
   }
@@ -252,25 +252,25 @@ function MochaJUnitReporter(runner, options) {
   Base.call(this, runner);
 
   // remove old results
-  this._runner.on('start', function() {
+  this._runner.on('start', function () {
     if (fs.existsSync(this._options.mochaFile)) {
       debug('removing report file', this._options.mochaFile);
       fs.unlinkSync(this._options.mochaFile);
     }
   }.bind(this));
 
-  this._onSuiteBegin = function(suite) {
+  this._onSuiteBegin = function (suite) {
     if (!isInvalidSuite(suite)) {
       testsuites.push(this.getTestsuiteData(suite));
     }
   };
 
-  this._runner.on('suite', function(suite) {
+  this._runner.on('suite', function (suite) {
     // allow tests to mock _onSuiteBegin
     return this._onSuiteBegin(suite);
   }.bind(this));
 
-  this._onSuiteEnd = function(suite) {
+  this._onSuiteEnd = function (suite) {
     if (!isInvalidSuite(suite)) {
       var testsuite = lastSuite();
       if (testsuite) {
@@ -280,21 +280,21 @@ function MochaJUnitReporter(runner, options) {
     }
   };
 
-  this._runner.on('suite end', function(suite) {
+  this._runner.on('suite end', function (suite) {
     // allow tests to mock _onSuiteEnd
     return this._onSuiteEnd(suite);
   }.bind(this));
 
-  this._runner.on('pass', function(test) {
+  this._runner.on('pass', function (test) {
     lastSuite().push(this.getTestcaseData(test));
   }.bind(this));
 
-  this._runner.on('fail', function(test, err) {
+  this._runner.on('fail', function (test, err) {
     lastSuite().push(this.getTestcaseData(test, err));
   }.bind(this));
 
   if (this._options.includePending) {
-    this._runner.on('pending', function(test) {
+    this._runner.on('pending', function (test) {
       var testcase = this.getTestcaseData(test);
 
       testcase.testcase.push({ skipped: null });
@@ -302,7 +302,7 @@ function MochaJUnitReporter(runner, options) {
     }.bind(this));
   }
 
-  this._runner.on('end', function(){
+  this._runner.on('end', function () {
     this.flush(testsuites);
   }.bind(this));
 }
@@ -312,19 +312,19 @@ function MochaJUnitReporter(runner, options) {
  * @param  {Object} suite - a test suite
  * @return {Object}       - an object representing the xml node
  */
-MochaJUnitReporter.prototype.getTestsuiteData = function(suite) {
+MochaJUnitReporter.prototype.getTestsuiteData = function (suite) {
   var antMode = this._options.antMode;
 
-  var _attr =  {
+  var _attr = {
     name: this._generateSuiteTitle(suite),
     timestamp: this._Date.now(),
     tests: suite.tests.length
   };
-  var testSuite = { testsuite: [ { _attr: _attr } ] };
+  var testSuite = { testsuite: [{ _attr: _attr }] };
 
 
-  if(suite.file) {
-    testSuite.testsuite[0]._attr.file =  suite.file;
+  if (suite.file) {
+    testSuite.testsuite[0]._attr.file = suite.file;
 
     // if(this._options.mochaFile.includes('[spec')) {
     //   let f = this._options.mochaFile.replace('[spec]', suite.file+'.xml');
@@ -356,7 +356,7 @@ MochaJUnitReporter.prototype.getTestsuiteData = function(suite) {
  * @param {object} err - if test failed, the failure object
  * @returns {object}
  */
-MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
+MochaJUnitReporter.prototype.getTestcaseData = function (test, err) {
   var jenkinsMode = this._options.jenkinsMode;
   var flipClassAndName = this._options.testCaseSwitchClassnameAndName;
   var name = stripAnsi(jenkinsMode ? getJenkinsClassname(test, this._options) : test.fullTitle());
@@ -385,11 +385,11 @@ MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
     ));
   }
   if (systemOutLines.length > 0) {
-    testcase.testcase.push({'system-out': this.removeInvalidCharacters(stripAnsi(systemOutLines.join('\n')))});
+    testcase.testcase.push({ 'system-out': this.removeInvalidCharacters(stripAnsi(systemOutLines.join('\n'))) });
   }
 
   if (this._options.outputs && (test.consoleErrors && test.consoleErrors.length > 0)) {
-    testcase.testcase.push({'system-err': this.removeInvalidCharacters(stripAnsi(test.consoleErrors.join('\n')))});
+    testcase.testcase.push({ 'system-err': this.removeInvalidCharacters(stripAnsi(test.consoleErrors.join('\n'))) });
   }
 
   if (err) {
@@ -403,10 +403,10 @@ MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
     }
     var failureMessage = err.stack || message;
     if (!Base.hideDiff && err.expected !== undefined) {
-        var oldUseColors = Base.useColors;
-        Base.useColors = false;
-        failureMessage += "\n" + Base.generateDiff(err.actual, err.expected);
-        Base.useColors = oldUseColors;
+      var oldUseColors = Base.useColors;
+      Base.useColors = false;
+      failureMessage += "\n" + Base.generateDiff(err.actual, err.expected);
+      Base.useColors = oldUseColors;
     }
     var failureElement = {
       _attr: {
@@ -416,7 +416,7 @@ MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
       _cdata: this.removeInvalidCharacters(failureMessage)
     };
 
-    testcase.testcase.push({failure: failureElement});
+    testcase.testcase.push({ failure: failureElement });
   }
   return testcase;
 };
@@ -425,7 +425,7 @@ MochaJUnitReporter.prototype.getTestcaseData = function(test, err) {
  * @param {string} input
  * @returns {string} without invalid characters
  */
-MochaJUnitReporter.prototype.removeInvalidCharacters = function(input){
+MochaJUnitReporter.prototype.removeInvalidCharacters = function (input) {
   if (!input) {
     return input;
   }
@@ -436,10 +436,10 @@ MochaJUnitReporter.prototype.removeInvalidCharacters = function(input){
  * Writes xml to disk and ouputs content if "toConsole" is set to true.
  * @param {Array.<Object>} testsuites - a list of xml configs
  */
-MochaJUnitReporter.prototype.flush = function(testsuites){
+MochaJUnitReporter.prototype.flush = function (testsuites) {
   this._xml = this.getXml(testsuites);
 
-  this.writeXmlToDisk(this._xml, this._options.mochaFile);
+  this.writeXmlToDisk(this._xml, this._options.output);
 
   if (this._options.toConsole === true) {
     console.log(this._xml); // eslint-disable-line no-console
@@ -452,14 +452,14 @@ MochaJUnitReporter.prototype.flush = function(testsuites){
  * @param {Array.<Object>} testsuites - a list of xml configs
  * @returns {string}
  */
-MochaJUnitReporter.prototype.getXml = function(testsuites) {
+MochaJUnitReporter.prototype.getXml = function (testsuites) {
   var totalTests = 0;
   var stats = this._runner.stats;
   var antMode = this._options.antMode;
   var hasProperties = (!!this._options.properties) || antMode;
   var Date = this._Date;
 
-  testsuites.forEach(function(suite) {
+  testsuites.forEach(function (suite) {
     var _suiteAttr = suite.testsuite[0]._attr;
     // testsuite is an array: [attrs, properties?, testcase, testcase, …]
     // we want to make sure that we are grabbing test cases at the correct index
@@ -475,7 +475,7 @@ MochaJUnitReporter.prototype.getXml = function(testsuites) {
     _suiteAttr.failures = 0;
     _suiteAttr.skipped = 0;
 
-    _cases.forEach(function(testcase) {
+    _cases.forEach(function (testcase) {
       var lastNode = testcase.testcase[testcase.testcase.length - 1];
 
       _suiteAttr.skipped += Number('skipped' in lastNode);
@@ -487,12 +487,12 @@ MochaJUnitReporter.prototype.getXml = function(testsuites) {
 
     if (antMode) {
       missingProps = ['system-out', 'system-err'];
-      suite.testsuite.forEach(function(item) {
-        missingProps = missingProps.filter(function(prop) {
+      suite.testsuite.forEach(function (item) {
+        missingProps = missingProps.filter(function (prop) {
           return !item[prop];
         });
       });
-      missingProps.forEach(function(prop) {
+      missingProps.forEach(function (prop) {
         var obj = {};
         obj[prop] = [];
         suite.testsuite.push(obj);
@@ -519,7 +519,7 @@ MochaJUnitReporter.prototype.getXml = function(testsuites) {
     if (stats.pending) {
       rootSuite._attr.skipped = stats.pending;
     }
-    testsuites = [ rootSuite ].concat(testsuites);
+    testsuites = [rootSuite].concat(testsuites);
   }
 
   return xml({ testsuites: testsuites }, { declaration: true, indent: '  ' });
@@ -530,41 +530,44 @@ MochaJUnitReporter.prototype.getXml = function(testsuites) {
  * @param {string} xml - xml string
  * @param {string} filePath - path to output file
  */
-MochaJUnitReporter.prototype.writeXmlToDisk = function(xml, filePath){
-  function fn2X(doc,def='result.xml') {
+MochaJUnitReporter.prototype.writeXmlToDisk = function (xml, filePath) {
+  function fn2X(doc, def = 'result.xml') {
     const s1 = 'file=\"';
-    const s2 = 'cypress\\e2e\\';
+    const s2 = `cypress\\e2e\\`;
 
-    var p1 = doc.indexOf(s1)+s1.length();
-    if(p1 !== -1) {
+    var p1 = doc.indexOf(s1) + 6;
+    if (p1 !== -1) {
       var s3 = doc.substring(p1);
-      var p2 = sub.indexOf('"');
+      var p2 = s3.indexOf('"');
       var s4 = s3.substring(0, p2);
-      
-      if(s4.startsWith(s2)) { s4 = s4.replace(s2, ''); }
+
+      if (s4.startsWith(s2)) { s4 = s4.replace(s2, ''); }
+      if (s4.includes(`\\`)) { s4 = s4.replace(`\\`, '/'); }
+
+      console.info('xml file name: ' + s4);
 
       return s4;
     }
 
-    return defaultSuiteTitle;
+    return def;
   }
-  
+
   if (filePath) {
     if (filePath.indexOf('[hash]') !== -1) {
       filePath = filePath.replace('[hash]', md5(xml));
     }
     if (filePath.indexOf('[spec]') !== -1) {
-      filePath = filePath.replace('[spec]', fn2X(xml,filePath));
+      filePath = filePath.replace('[spec]', fn2X(xml));
     }
 
-    info('writing file to', filePath);
+    console.info('writing file to', filePath);
     mkdirp.sync(path.dirname(filePath));
 
     try {
-        fs.writeFileSync(filePath, xml, 'utf-8');
+      fs.writeFileSync(filePath, xml, 'utf-8');
     } catch (exc) {
-        debug('problem writing results: ' + exc);
+      console.info('problem writing results: ' + exc);
     }
-    debug('results written successfully');
+    console.info('results written successfully');
   }
 };
