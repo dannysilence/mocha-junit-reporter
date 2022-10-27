@@ -326,10 +326,10 @@ MochaJUnitReporter.prototype.getTestsuiteData = function(suite) {
   if(suite.file) {
     testSuite.testsuite[0]._attr.file =  suite.file;
 
-    if(this._options.mochaFile.includes('[spec')) {
-      let f = this._options.mochaFile.replace('[spec]', suite.file+'.xml');
-      this._options.mochaFile = v;
-    }
+    // if(this._options.mochaFile.includes('[spec')) {
+    //   let f = this._options.mochaFile.replace('[spec]', suite.file+'.xml');
+    //   this._options.mochaFile = f;
+    // }
   }
 
   var properties = generateProperties(this._options);
@@ -531,12 +531,33 @@ MochaJUnitReporter.prototype.getXml = function(testsuites) {
  * @param {string} filePath - path to output file
  */
 MochaJUnitReporter.prototype.writeXmlToDisk = function(xml, filePath){
+  function fn2X(doc,def='result.xml') {
+    const s1 = 'file=\"';
+    const s2 = 'cypress\\e2e\\';
+
+    var p1 = doc.indexOf(s1)+s1.length();
+    if(p1 !== -1) {
+      var s3 = doc.substring(p1);
+      var p2 = sub.indexOf('"');
+      var s4 = s3.substring(0, p2);
+      
+      if(s4.startsWith(s2)) { s4 = s4.replace(s2, ''); }
+
+      return s4;
+    }
+
+    return defaultSuiteTitle;
+  }
+  
   if (filePath) {
     if (filePath.indexOf('[hash]') !== -1) {
       filePath = filePath.replace('[hash]', md5(xml));
     }
+    if (filePath.indexOf('[spec]') !== -1) {
+      filePath = filePath.replace('[spec]', fn2X(xml,filePath));
+    }
 
-    debug('writing file to', filePath);
+    info('writing file to', filePath);
     mkdirp.sync(path.dirname(filePath));
 
     try {
