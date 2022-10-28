@@ -533,7 +533,7 @@ MochaJUnitReporter.prototype.getXml = function (testsuites) {
 MochaJUnitReporter.prototype.writeXmlToDisk = function (xml, filePath) {
   function fn2X(doc, def = 'result.xml') {
     const s1 = 'file=\"';
-    const s2 = `cypress\\e2e\\`;
+    const s2 = `cypress/e2e/`;
 
     var p1 = doc.indexOf(s1) + 6;
     if (p1 !== -1) {
@@ -541,8 +541,8 @@ MochaJUnitReporter.prototype.writeXmlToDisk = function (xml, filePath) {
       var p2 = s3.indexOf('"');
       var s4 = s3.substring(0, p2);
 
-      if (s4.startsWith(s2)) { s4 = s4.replace(s2, ''); }
       if (s4.includes(`\\`)) { s4 = s4.replace(`\\`, '/'); }
+      if (s4.startsWith(s2)) { s4 = s4.replace(s2, ''); }
       
       return s4;
     }
