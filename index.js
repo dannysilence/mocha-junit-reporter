@@ -541,9 +541,11 @@ MochaJUnitReporter.prototype.writeXmlToDisk = function (xml, filePath) {
       var p2 = s3.indexOf('"');
       var s4 = s3.substring(0, p2);
 
-      if (s4.includes(`\\`)) { s4 = s4.replace(`\\`, '/'); }
-      if (s4.startsWith(s2)) { s4 = s4.replace(s2, ''); }
-      
+      if (s4.includes(`\\`)) { s4 = s4.replace(/\\/g, '/'); }
+      if (s4.includes(s2)) { s4 = s4.replace(/cypress\/e2e\//g, ''); }
+      if (s4.includes(`.cy.js`)) { s4 = s4.replace(/\.cy\.js/g, ''); }
+      if (s4.includes(`.cy.ts`)) { s4 = s4.replace(/\.cy\.ts/g, ''); }
+
       return s4;
     }
 
