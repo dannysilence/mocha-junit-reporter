@@ -29,7 +29,7 @@ try {
   }
 } catch (e) {
   // eslint-disable-next-line no-console
-  console.warn("Couldn't determine Mocha version");
+  //console.warn("Couldn't determine Mocha version");
 }
 module.exports = MochaJUnitReporter;
 
@@ -230,7 +230,7 @@ let debugO = false, minimal = false, x = {};
  * @param {Object} options - mocha options
  */
 function MochaJUnitReporter(runner, options) {
-  console.info(JSON.stringify(options));
+  //console.info(JSON.stringify(options));
   if (options.reporterOptions.enabled === false) return;
   if (mocha6plus) {
     createStatsCollector(runner);
@@ -560,7 +560,7 @@ MochaJUnitReporter.prototype.writeXmlToDisk = function (xml, filePath) {
       filePath = filePath.replace('[spec]', fn2X(xml));
     }
 
-    console.info('writing xml file to', filePath);
+    //console.info('writing xml file to', filePath);
     mkdirp.sync(path.dirname(filePath));
 
     try {
