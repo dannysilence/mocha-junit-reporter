@@ -64,13 +64,18 @@ function configureDefaults(options) {
   var config = findReporterOptions(options);
   debug('options', config);
   config.mochaFile = getSetting(config.mochaFile, 'MOCHA_FILE', '[spec].xml');
-  config.attachments = getSetting(config.attachments, 'ATTACHMENTS', false);
-  config.antMode = getSetting(config.antMode, 'ANT_MODE', false);
+
+  config.logsFile = getSetting(config.logsFile, 'logsFile', '[spec].json');
+  config.testFile = getSetting(config.testFile, 'testFile', '');
+
+  config.attachments = getSetting(config.attachments, 'ATTACHMENTS', true);
+  config.antMode = getSetting(config.antMode, 'ANT_MODE', true);
   config.jenkinsMode = getSetting(config.jenkinsMode, 'JENKINS_MODE', false);
   config.properties = getSetting(config.properties, 'PROPERTIES', null, parsePropertiesFromEnv);
   config.toConsole = !!config.toConsole;
   config.rootSuiteTitle = config.rootSuiteTitle || 'Root Suite';
   config.testsuitesTitle = config.testsuitesTitle || 'Mocha Tests';
+  config.includePending = true;
 
   if (config.antMode) {
     updateOptionsForAntMode(config);
@@ -325,6 +330,13 @@ MochaJUnitReporter.prototype.getTestsuiteData = function (suite) {
 
   if (suite.file) {
     testSuite.testsuite[0]._attr.file = suite.file;
+    this._options.testFile = suite.file;
+    let pf = suite.file.replaceAll(/\\/g, '/');
+    let pi = pf.lastIndexOf('/e2e/');
+    let pn = pf.substring(pi + '/e2e/'.length).replaceAll(/\.cy\.[j|t]s$/g, '')
+    this._options.logsFile = this._options.logsFile.replaceAll(/\[spec\]/g, pn);
+
+    // this.config.testFile = suite.file;
 
     // if(this._options.mochaFile.includes('[spec')) {
     //   let f = this._options.mochaFile.replace('[spec]', suite.file+'.xml');
@@ -356,11 +368,12 @@ MochaJUnitReporter.prototype.getTestsuiteData = function (suite) {
  * @param {object} err - if test failed, the failure object
  * @returns {object}
  */
-MochaJUnitReporter.prototype.getTestcaseData = function (test, err) {
+MochaJUnitReporter.prototype.getTestcaseData = function (test, error) {
   var jenkinsMode = this._options.jenkinsMode;
   var flipClassAndName = this._options.testCaseSwitchClassnameAndName;
   var name = stripAnsi(jenkinsMode ? getJenkinsClassname(test, this._options) : test.fullTitle());
   var classname = stripAnsi(test.title);
+  // var fileName = this._options.logsFile; console.log('!!!!!!!!!!!!!!!!!!!!!!!!!' + fileName);
   var testcase = {
     testcase: [{
       _attr: {
@@ -373,45 +386,52 @@ MochaJUnitReporter.prototype.getTestcaseData = function (test, err) {
 
   // We need to merge console.logs and attachments into one <system-out> -
   //  see JUnit schema (only accepts 1 <system-out> per test).
+  let att = test.attachments && test.attachments.length >= 0 ? test.attachments : [];
+
+  let err = test.consoleErrors && test.consoleErrors.length >= 0 ? test.consoleErrors : [];
+  let out = test.consoleOutputs && test.consoleOutputs.length >= 0 ? test.consoleOutputs : [];
+  let log = fs.existsSync(this._options.logsFile) ? JSON.parse(fs.readFileSync(this._options.logsFile, 'utf-8')) : { tests: [] };
+
+  // console.log('##########################' + this._options.logsFile);
+  // console.log('##########################' + log.tests.length);
+  let cti = log.tests.filter(ti => ti.test === test.fullTitle());
+  if (out.length === 0 && cti.length > 0) {
+    out = cti[0].commands;
+    err = cti[0].error ? [cti[0].error] : [];
+  }
   var systemOutLines = [];
-  if (this._options.outputs && (test.consoleOutputs && test.consoleOutputs.length > 0)) {
-    systemOutLines = systemOutLines.concat(test.consoleOutputs);
-  }
-  if (this._options.attachments && test.attachments && test.attachments.length > 0) {
-    systemOutLines = systemOutLines.concat(test.attachments.map(
-      function (file) {
-        return '[[ATTACHMENT|' + file + ']]';
-      }
-    ));
-  }
+  // if (this._options.outputs && (test.consoleOutputs && test.consoleOutputs.length > 0)) {
+  systemOutLines = systemOutLines.concat(out);
+  systemOutLines = systemOutLines.concat(att.map(function (file) { return '[[ATTACHMENT|' + file + ']]'; }));
+  let x1 = this.removeInvalidCharacters(stripAnsi(systemOutLines.join('\n')));
+  let x2 = this.removeInvalidCharacters(stripAnsi(err.join('\n')));
   if (systemOutLines.length > 0) {
-    testcase.testcase.push({ 'system-out': this.removeInvalidCharacters(stripAnsi(systemOutLines.join('\n'))) });
+    testcase.testcase.push({ 'system-out': { _cdata: x1 } });
+  }
+  if (err.length > 0) {
+    testcase.testcase.push({ 'system-err': { _cdata: x2 } });
   }
 
-  if (this._options.outputs && (test.consoleErrors && test.consoleErrors.length > 0)) {
-    testcase.testcase.push({ 'system-err': this.removeInvalidCharacters(stripAnsi(test.consoleErrors.join('\n'))) });
-  }
-
-  if (err) {
+  if (error) {
     var message;
-    if (err.message && typeof err.message.toString === 'function') {
-      message = err.message + '';
-    } else if (typeof err.inspect === 'function') {
-      message = err.inspect() + '';
+    if (error.message && typeof error.message.toString === 'function') {
+      message = error.message + '';
+    } else if (typeof error.inspect === 'function') {
+      message = error.inspect() + '';
     } else {
       message = '';
     }
-    var failureMessage = err.stack || message;
-    if (!Base.hideDiff && err.expected !== undefined) {
+    var failureMessage = error.stack || message;
+    if (!Base.hideDiff && error.expected !== undefined) {
       var oldUseColors = Base.useColors;
       Base.useColors = false;
-      failureMessage += "\n" + Base.generateDiff(err.actual, err.expected);
+      failureMessage += "\n" + Base.generateDiff(error.actual, error.expected);
       Base.useColors = oldUseColors;
     }
     var failureElement = {
       _attr: {
         message: this.removeInvalidCharacters(message) || '',
-        type: err.name || ''
+        type: error.name || ''
       },
       _cdata: this.removeInvalidCharacters(failureMessage)
     };
@@ -485,19 +505,20 @@ MochaJUnitReporter.prototype.getXml = function (testsuites) {
       }
     });
 
-    if (antMode) {
-      missingProps = ['system-out', 'system-err'];
-      suite.testsuite.forEach(function (item) {
-        missingProps = missingProps.filter(function (prop) {
-          return !item[prop];
-        });
-      });
-      missingProps.forEach(function (prop) {
-        var obj = {};
-        obj[prop] = [];
-        suite.testsuite.push(obj);
-      });
-    }
+    // if (antMode) {
+    //   missingProps = ['system-out', 'system-err'];
+    //   // testcase.testcase.forEach(function (tcase) {
+    //   testcase.testcase.forEach(function (tcase) {
+    //     missingProps = missingProps.filter(function (prop) {
+    //       return !tcase[prop];
+    //     });
+    //   });
+    //   missingProps.forEach(function (prop) {
+    //     var obj = {};
+    //     obj[prop] = [];
+    //     testcase.testcase.push(obj);
+    //   });
+    // }
 
     if (!_suiteAttr.skipped) {
       delete _suiteAttr.skipped;
